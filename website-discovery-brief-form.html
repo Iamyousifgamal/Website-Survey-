@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studio Intake — Website Discovery Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --ink:#14161F; --ink-2:#1E212C; --ink-3:#2A2E3B; --line-dark:rgba(255,255,255,.09);
+  --paper:#FAF8F4; --paper-2:#F1EDE3; --paper-3:#E9E3D4; --line:#DFD8C8;
+  --text:#22232A; --muted:#6E6D74; --muted-2:#93918C;
+  --brass:#A9782F; --brass-deep:#8A611F; --brass-light:#D9AE68; --brass-wash:#F3E9D4;
+  --error:#AB4030; --error-wash:#F7E4DF;
+  --radius-s:3px; --radius-m:6px; --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{font-family:'Public Sans',system-ui,sans-serif;color:var(--text);background:var(--paper);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.5;}
+h1,h2,h3,.serif{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.01em;}
+button{font-family:inherit;cursor:pointer;}
+:focus-visible{outline:2px solid var(--brass-deep);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+#app{display:flex;min-height:100vh;}
+.rail{width:280px;flex:none;background:var(--ink);color:#fff;padding:36px 26px 24px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;}
+.rail-brand{display:flex;align-items:center;gap:9px;margin-bottom:6px;}
+.rail-brand .mark{width:28px;height:28px;border-radius:50%;background:linear-gradient(155deg,var(--brass-light),var(--brass-deep));display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;color:var(--ink);font-size:14px;flex:none;}
+.rail-brand span.name{font-family:'Fraunces',serif;font-size:18px;font-weight:600;}
+.rail-tag{color:#9C9AAB;font-size:12.5px;margin:0 0 26px;}
+.rail-progress{margin-bottom:24px;}
+.rail-progress .bar{height:3px;background:var(--line-dark);border-radius:2px;overflow:hidden;}
+.rail-progress .bar>i{display:block;height:100%;background:var(--brass-light);transition:width .5s var(--ease);}
+.rail-progress .pct{font-size:12px;color:#9C9AAB;margin-top:8px;}
+.steplist{list-style:none;margin:0;padding:0;flex:1;}
+.steplist li{margin-bottom:2px;}
+.steplist button{width:100%;text-align:left;background:none;border:none;color:#B4B2C0;padding:9px 10px;border-radius:var(--radius-m);display:flex;gap:11px;align-items:flex-start;font-size:13.5px;transition:background .15s,color .15s;}
+.steplist button:hover{background:var(--ink-2);color:#fff;}
+.steplist .num{flex:none;width:22px;height:22px;border-radius:50%;border:1px solid #45465A;display:flex;align-items:center;justify-content:center;font-size:11px;color:#9C9AAB;margin-top:1px;}
+.steplist li.done .num{background:var(--brass-light);border-color:var(--brass-light);color:var(--ink);}
+.steplist li.done .num span{display:none;}
+.steplist li.done .num::after{content:"✓";}
+.steplist li.active button{background:var(--ink-2);color:#fff;}
+.steplist li.active .num{border-color:var(--brass-light);color:var(--brass-light);}
+.rail-footer{border-top:1px solid var(--line-dark);padding-top:16px;margin-top:12px;}
+.rail-footer button{background:none;border:1px solid #3A3B49;color:#B4B2C0;width:100%;padding:9px;border-radius:var(--radius-m);font-size:12.5px;}
+.rail-footer button:hover{border-color:var(--brass-light);color:#fff;}
+
+.topbar{display:none;position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;padding:14px 18px;}
+.topbar .row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.topbar .label{font-size:12.5px;color:#9C9AAB;}
+.topbar .title{font-family:'Fraunces',serif;font-size:15px;margin-top:2px;}
+.topbar .bar{height:3px;background:var(--line-dark);border-radius:2px;overflow:hidden;margin-top:12px;}
+.topbar .bar>i{display:block;height:100%;background:var(--brass-light);}
+.topbar button.menu{background:none;border:1px solid #3A3B49;color:#fff;border-radius:var(--radius-m);padding:6px 10px;font-size:12px;flex:none;}
+.mobile-steps{display:none;background:var(--ink-2);padding:8px 10px 14px;}
+.mobile-steps.open{display:block;}
+.mobile-steps ul{list-style:none;margin:0;padding:0;}
+.mobile-steps button{width:100%;text-align:left;background:none;border:none;color:#B4B2C0;padding:9px 10px;border-radius:var(--radius-m);font-size:13.5px;display:flex;gap:10px;}
+.mobile-steps li.active button{color:#fff;font-weight:600;}
+
+main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.wrap{max-width:680px;width:100%;margin:0 auto;padding:56px 32px 140px;flex:1;}
+.step-eyebrow{color:var(--brass-deep);font-size:12.5px;font-weight:600;margin:0 0 10px;}
+.step-title{font-size:29px;margin:0 0 10px;}
+.step-desc{color:var(--muted);font-size:14.5px;margin:0 0 40px;max-width:520px;}
+
+.field{margin-bottom:32px;}
+.field-label{font-size:15px;font-weight:600;margin:0 0 4px;display:flex;gap:8px;align-items:baseline;}
+.field-label .req{color:var(--brass-deep);font-size:12px;font-weight:500;}
+.field-hint{color:var(--muted);font-size:12.5px;font-style:italic;margin:0 0 14px;}
+.field-error{color:var(--error);font-size:12.5px;margin-top:8px;display:none;}
+.field.has-error .field-error{display:block;}
+.field.has-error .field-label{color:var(--error);}
+
+input[type=text],input[type=url],input[type=date],textarea{width:100%;font-family:inherit;font-size:14.5px;color:var(--text);background:#fff;border:1px solid var(--line);border-radius:var(--radius-s);padding:11px 13px;transition:border-color .15s;}
+.field.has-error input,.field.has-error textarea{border-color:var(--error);background:var(--error-wash);}
+textarea{min-height:90px;resize:vertical;line-height:1.5;}
+input:focus,textarea:focus{border-color:var(--brass-deep);}
+input::placeholder,textarea::placeholder{color:var(--muted-2);}
+
+.opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:9px;}
+.opt-card{border:1px solid var(--line);background:#fff;border-radius:var(--radius-m);padding:12px 13px;font-size:13.5px;text-align:left;display:flex;gap:9px;align-items:center;transition:border-color .15s,background .15s;}
+.opt-card:hover{border-color:var(--brass-light);}
+.opt-card .chk{flex:none;width:16px;height:16px;border:1.5px solid var(--line);border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;}
+.opt-card.radio .chk{border-radius:50%;}
+.opt-card.selected{border-color:var(--brass-deep);background:var(--brass-wash);}
+.opt-card.selected .chk{background:var(--brass-deep);border-color:var(--brass-deep);}
+.opt-card.selected .chk::after{content:"✓";}
+.opt-card.radio.selected .chk::after{content:"";width:7px;height:7px;border-radius:50%;background:#fff;}
+.other-text{margin-top:10px;}
+
+.scale-wrap{padding:6px 4px;}
+.scale-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:8px;}
+input[type=range]{width:100%;accent-color:var(--brass-deep);height:4px;}
+
+.chip-cloud{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 14px;font-size:13px;}
+.chip.selected{background:var(--ink);color:#fff;border-color:var(--ink);}
+.chip:disabled{opacity:.4;cursor:not-allowed;}
+.chip-count{font-size:12.5px;color:var(--muted);margin-top:10px;}
+
+.rep-item{border:1px solid var(--line);border-radius:var(--radius-m);padding:16px;margin-bottom:10px;background:#fff;position:relative;}
+.rep-grid.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.rep-remove{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);font-size:13px;padding:4px 6px;}
+.rep-remove:hover{color:var(--error);}
+.rep-mini-label{font-size:11.5px;color:var(--muted);margin:0 0 4px;font-weight:600;}
+.add-btn{border:1px dashed var(--line);background:none;border-radius:var(--radius-m);padding:11px 16px;font-size:13.5px;color:var(--brass-deep);width:100%;font-weight:600;}
+.add-btn:hover{border-color:var(--brass-deep);background:var(--brass-wash);}
+.add-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+.color-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+.color-row input[type=color]{width:40px;height:40px;border:1px solid var(--line);border-radius:var(--radius-s);padding:2px;background:#fff;flex:none;}
+.color-row input.hextext{flex:none;width:100px;}
+.color-row input.color-label{flex:1;}
+.swatch-pill{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:20px;padding:4px 10px 4px 4px;font-size:12px;}
+.swatch-pill .dot{width:16px;height:16px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.1);}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+
+.dropzone{border:1.5px dashed var(--line);border-radius:var(--radius-m);padding:24px 18px;text-align:center;background:var(--paper-2);cursor:pointer;transition:border-color .15s,background .15s;}
+.dropzone.drag{border-color:var(--brass-deep);background:var(--brass-wash);}
+.dropzone .dz-title{font-size:13.5px;font-weight:600;}
+.dropzone .dz-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.file-list{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+.file-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:var(--radius-s);padding:8px 10px;font-size:12.5px;background:#fff;}
+.file-row .thumb{width:32px;height:32px;border-radius:var(--radius-s);object-fit:cover;flex:none;background:var(--paper-2);}
+.file-row .fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-row button{background:none;border:none;color:var(--muted);font-size:13px;}
+.file-row button:hover{color:var(--error);}
+
+.footer-nav{position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:16px 32px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.footer-nav .left,.footer-nav .right{display:flex;gap:10px;align-items:center;}
+.btn{border-radius:var(--radius-m);padding:12px 22px;font-size:13.5px;font-weight:600;border:1px solid transparent;transition:opacity .15s,background .15s;}
+.btn-primary{background:var(--ink);color:#fff;}
+.btn-primary:hover{background:var(--ink-3);}
+.btn-ghost{background:none;border-color:var(--line);color:var(--text);}
+.btn-ghost:hover{border-color:var(--muted-2);}
+.step-count{font-size:12.5px;color:var(--muted);}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s var(--ease),transform .25s var(--ease);z-index:100;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.review-section{border:1px solid var(--line);border-radius:var(--radius-m);background:#fff;padding:22px 22px 18px;margin-bottom:16px;}
+.review-section .rs-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+.review-section h3{font-size:16px;margin:0;}
+.review-section .edit-btn{font-size:12px;color:var(--brass-deep);background:none;border:none;font-weight:600;}
+.review-section .edit-btn:hover{text-decoration:underline;}
+.review-row{display:grid;grid-template-columns:180px 1fr;gap:16px;padding:8px 0;border-top:1px solid var(--paper-3);font-size:13.5px;}
+.review-row:first-of-type{border-top:none;}
+.review-row .rk{color:var(--muted);}
+.review-row .rv .empty{color:var(--muted-2);font-style:italic;}
+.review-swatches{display:flex;gap:6px;flex-wrap:wrap;}
+.consent-box{border:1px solid var(--line);background:var(--paper-2);border-radius:var(--radius-m);padding:18px;display:flex;gap:12px;align-items:flex-start;margin:24px 0;}
+.consent-box input{margin-top:3px;width:16px;height:16px;flex:none;}
+.consent-box label{font-size:13.5px;}
+
+.welcome{max-width:600px;margin:auto;text-align:center;padding:80px 32px;}
+.welcome .mark{width:54px;height:54px;border-radius:50%;margin:0 auto 24px;background:linear-gradient(155deg,var(--brass-light),var(--brass-deep));display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:25px;color:var(--ink);}
+.welcome h1{font-size:32px;margin-bottom:14px;}
+.welcome p{color:var(--muted);font-size:15px;max-width:440px;margin:0 auto 32px;}
+.welcome .meta{display:flex;justify-content:center;gap:28px;margin:34px 0 0;font-size:12.5px;color:var(--muted-2);}
+.welcome .meta b{display:block;color:var(--text);font-size:19px;font-family:'Fraunces',serif;font-weight:600;}
+
+@media (max-width:900px){
+  .rail{display:none;} .topbar{display:block;}
+  .wrap{padding:32px 20px 130px;} .footer-nav{padding:14px 20px;}
+  .step-title{font-size:23px;} .review-row{grid-template-columns:1fr;gap:4px;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+'use strict';
+
+/* ============ OPTIONS ============ */
+const O = {
+  goal:['Generate leads','Sell products','Sell services','Get bookings','Get calls / messages','Build credibility','Showcase work','Provide information'],
+  action:['Contact us','Call us','WhatsApp / message us','Book an appointment','Request a quote','Buy something','Visit our location','Sign up'],
+  locationScope:['Local','City','Multiple cities','Country','Multiple countries','Worldwide'],
+  adjectives:['Premium','Modern','Minimal','Luxury','Professional','Friendly','Playful','Youthful','Bold','Energetic','Elegant','Sophisticated','Trustworthy','Traditional','Innovative','Technical','Warm','Artistic','Powerful','Calm'],
+  visualStyle:['Minimal','Modern','Luxury','Editorial','Corporate','Bold','Playful','Futuristic','Organic','Artistic','Premium','Clean'],
+  animation:['Almost none','Subtle','Moderate','High-end','Experimental'],
+  inspireReasons:['Layout','Colors','Typography','Animations','Navigation','Photography','Overall feeling'],
+  pages:['Home','About','Services','Products','Shop','Portfolio','Case Studies','Blog','FAQ','Contact','Pricing','Booking','Locations','Gallery','Careers'],
+  functionality:['Contact form','Booking','Online payments','E-commerce','Search','Product filtering','User accounts','Newsletter','Blog / CMS','WhatsApp integration','Google Maps','Reviews','CRM integration'],
+  improvements:['Design','Mobile experience','Speed','SEO','Content','Navigation','Branding','Conversion','Accessibility','Functionality'],
+  assetTypes:['Images','Videos','Brand assets','PDFs','Menus','Product catalogs','Existing copy']
+};
+
+const A = (id)=>(s)=>s.answers[id];
+const has = (id,val)=>(s)=>Array.isArray(s.answers[id]) && s.answers[id].includes(val);
+
+/* ============ SCHEMA — 8 sections, ~25 questions ============ */
+const STEPS = [
+{ id:'business', title:'Your business', eyebrow:'Step 1 of 8', desc:'Let\'s start with the basics — no need to get it perfect, just describe it in your own words.',
+  fields:[
+    {id:'businessName', type:'text', label:'What\'s your business or brand name?', required:true, placeholder:'e.g. Marlowe & Finch'},
+    {id:'businessDescription', type:'textarea', label:'What does your business do?', required:true, hint:'This helps us frame the story your website should tell.'},
+    {id:'productsServices', type:'textarea', label:'What products or services do you offer?', required:true},
+  ]},
+{ id:'goals', title:'Website goals', eyebrow:'Step 2 of 8', desc:'What this website needs to achieve for your business.',
+  fields:[
+    {id:'mainGoal', type:'select-single', label:'What is the main goal of your new website?', required:true, other:true, options:O.goal},
+    {id:'primaryAction', type:'select-single', label:'What is the ONE action you most want visitors to take?', required:true, other:true, options:O.action},
+    {id:'successDefinition', type:'textarea', label:'What would make you say "this website was successful"?', hint:'Think six months from now — what result would make this a win?'},
+  ]},
+{ id:'audience', title:'Target audience', eyebrow:'Step 3 of 8', desc:'This helps us understand who we\'re designing for.',
+  fields:[
+    {id:'idealCustomer', type:'textarea', label:'Who is your ideal customer?', required:true},
+    {id:'audienceLocation', type:'locationscope', label:'Where is your target audience located?', options:O.locationScope},
+    {id:'customerProblem', type:'textarea', label:'What problem are you solving for your customers?', required:true},
+  ]},
+{ id:'brand', title:'Brand identity', eyebrow:'Step 4 of 8', desc:'Tell us what already exists so we know what to use, refine, or create from scratch.',
+  fields:[
+    {id:'hasLogo', type:'select-single', label:'Do you already have a logo?', required:true, options:['Yes','No','I need a redesign']},
+    {id:'logoFile', type:'file', label:'Upload your logo', accept:'image/*,.ai,.eps,.svg,.pdf', showIf:(s)=>A('hasLogo')(s)==='Yes'},
+    {id:'hasColors', type:'select-single', label:'Do you already have brand colors?', required:true, options:['Yes','No','I need help choosing / refining them']},
+    {id:'colors', type:'colorgroup', label:'Add your brand colors', showIf:(s)=>A('hasColors')(s)==='Yes'},
+    {id:'hasBrandKit', type:'select-single', label:'Do you already have brand fonts or brand guidelines?', required:true, options:['Yes','No',"I'm not sure"]},
+    {id:'fonts', type:'fontlist', label:'Font names (if any)', showIf:(s)=>A('hasBrandKit')(s)==='Yes'},
+    {id:'guidelinesFile', type:'file', label:'Upload your brand guidelines (optional)', accept:'.pdf,image/*', showIf:(s)=>A('hasBrandKit')(s)==='Yes'},
+    {id:'brandAdjectives', type:'adjectives', label:'Choose up to 5 words that should describe your brand.', max:5, options:O.adjectives, other:true},
+  ]},
+{ id:'visual', title:'Visual direction', eyebrow:'Step 5 of 8', desc:'Don\'t worry about getting this perfect — this just points us in the right direction.',
+  fields:[
+    {id:'visualStyle', type:'select-multi', label:'Which visual style feels closest to what you want?', required:true, other:true, options:O.visualStyle},
+    {id:'boldness', type:'scale', label:'How bold should the website feel?', min:1, max:5, lowLabel:'Subtle', highLabel:'Extremely bold'},
+    {id:'animationLevel', type:'select-single', label:'How much animation would you like?', options:O.animation},
+    {id:'likedSites', type:'urllist', label:'Are there any websites you really like?', hint:'Add up to 3 — even one is helpful.', max:3, mode:'like'},
+    {id:'avoidStyles', type:'textarea', label:'Is there anything you definitely don\'t want?', hint:'Colors, styles, fonts, animations, layouts — anything to avoid.'},
+  ]},
+{ id:'structure', title:'Website & UX', eyebrow:'Step 6 of 8', desc:'The pages and functionality your site needs to support.',
+  fields:[
+    {id:'pages', type:'pagelist', label:'Which pages do you need?', required:true, options:O.pages},
+    {id:'functionality', type:'select-multi', label:'What functionality does your website need?', other:true, options:O.functionality},
+    {id:'sellWhat', type:'text', label:'What are you selling?', showIf:has('functionality','E-commerce'), placeholder:'e.g. handmade candles'},
+    {id:'productCount', type:'text', label:'Approximately how many products?', showIf:has('functionality','E-commerce'), placeholder:'e.g. around 40'},
+    {id:'ecommercePlatform', type:'text', label:'Do you already use a platform such as Shopify?', showIf:has('functionality','E-commerce'), placeholder:'e.g. Shopify, or none yet'},
+    {id:'bookingType', type:'text', label:'What type of booking is this?', showIf:has('functionality','Booking'), placeholder:'e.g. 30-minute consultations'},
+    {id:'bookingPlatform', type:'text', label:'Do you already use a booking platform?', showIf:has('functionality','Booking'), placeholder:'e.g. Calendly, or none yet'},
+    {id:'hasExistingWebsite', type:'select-single', label:'Do you already have a website?', required:true, options:['Yes','No']},
+    {id:'existingUrl', type:'text', label:'What\'s the URL?', showIf:(s)=>A('hasExistingWebsite')(s)==='Yes', placeholder:'https://'},
+    {id:'improvements', type:'select-multi', label:'What would you most like to improve?', other:true, options:O.improvements, showIf:(s)=>A('hasExistingWebsite')(s)==='Yes'},
+  ]},
+{ id:'content', title:'Content & competition', eyebrow:'Step 7 of 8', desc:'What you have on hand, and who you\'re up against.',
+  fields:[
+    {id:'assetsReady', type:'select-single', label:'Do you already have the content and assets needed for the website?', required:true, options:['Yes, everything','Some of it','No']},
+    {id:'assetFiles', type:'file', label:'Upload what you have', help:'Images, videos, brand assets, PDFs, menus, catalogs, existing copy — anything relevant.', accept:'image/*,video/*,.pdf,.doc,.docx', multiple:true, showIf:(s)=>['Yes, everything','Some of it'].includes(A('assetsReady')(s))},
+    {id:'contentProvider', type:'select-single', label:'Who will provide the website content?', required:true, options:['Client','Designer / developer','AI-assisted','A combination']},
+    {id:'competitors', type:'competitorlist', label:'Who are your main competitors?', hint:'Add up to 3.', max:3},
+    {id:'competitiveEdge', type:'textarea', label:'What should your website do better than theirs?'},
+  ]},
+{ id:'final', title:'Final details', eyebrow:'Step 8 of 8', desc:'A couple of last things, then you\'re done.',
+  fields:[
+    {id:'additionalNotes', type:'textarea', label:'Is there anything else I should know before I start designing?'},
+    {id:'launchDate', type:'date', label:'Preferred launch date (optional)'},
+    {id:'domainHosting', type:'text', label:'Existing domain or hosting? (optional)', placeholder:'e.g. yourbrand.com, hosted on GoDaddy'},
+    {id:'integrations', type:'text', label:'Any required integrations? (optional)', placeholder:'e.g. Mailchimp, Stripe, Google Analytics'},
+  ]},
+];
+const REVIEW_INDEX = STEPS.length;
+const TOTAL = STEPS.length + 1;
+
+/* ============ STATE ============ */
+const STORAGE_KEY = 'studioIntakeBriefShortV1';
+const State = {
+  current:0, answers:{}, files:{}, consent:false,
+  save(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({current:this.current,answers:this.answers,consent:this.consent})); }catch(e){} },
+  load(){ try{ const raw=localStorage.getItem(STORAGE_KEY); if(raw){ const d=JSON.parse(raw); this.current=d.current||0; this.answers=d.answers||{}; this.consent=d.consent||false; return true; } }catch(e){} return false; }
+};
+
+/* ============ HELPERS ============ */
+function esc(str){ return String(str==null?'':str).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._timer); t._timer=setTimeout(()=>t.classList.remove('show'),2200); }
+function fileToDataUrl(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+function fmtSize(b){ if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(0)+' KB'; return (b/1024/1024).toFixed(1)+' MB'; }
+function isEmpty(v){ if(v==null) return true; if(Array.isArray(v)) return v.length===0; if(typeof v==='string') return v.trim()===''; return false; }
+function visibleFields(step){ return step.fields.filter(f=>!f.showIf || f.showIf(State)); }
+function validateStep(i){
+  const step = STEPS[i]; if(!step) return true;
+  let ok=true;
+  visibleFields(step).forEach(f=>{
+    if(!f.required) return;
+    const val = State.answers[f.id];
+    const el = document.querySelector('[data-field="'+f.id+'"]');
+    const empty = isEmpty(val);
+    if(el) el.classList.toggle('has-error', empty);
+    if(empty) ok=false;
+  });
+  return ok;
+}
+
+/* ============ FIELD RENDERERS ============ */
+function fieldWrap(f, inner){
+  return '<div class="field" data-field="'+f.id+'">'
+    +'<p class="field-label">'+esc(f.label)+(f.required?' <span class="req">Required</span>':'')+'</p>'
+    +(f.hint?'<p class="field-hint">'+esc(f.hint)+'</p>':'')
+    +(f.help?'<p class="field-hint">'+esc(f.help)+'</p>':'')
+    +inner+'<p class="field-error">Please complete this field before continuing.</p></div>';
+}
+function renderText(f){ const v=State.answers[f.id]||''; return fieldWrap(f,'<input type="text" placeholder="'+esc(f.placeholder||'')+'" value="'+esc(v)+'" data-bind="'+f.id+'">'); }
+function renderTextarea(f){ const v=State.answers[f.id]||''; return fieldWrap(f,'<textarea placeholder="'+esc(f.placeholder||'')+'" data-bind="'+f.id+'">'+esc(v)+'</textarea>'); }
+function renderDate(f){ const v=State.answers[f.id]||''; return fieldWrap(f,'<input type="date" value="'+esc(v)+'" data-bind="'+f.id+'">'); }
+function renderSelectSingle(f){
+  const v=State.answers[f.id]||'', ov=State.answers[f.id+'_other']||'';
+  let cards = f.options.map(o=>'<button type="button" class="opt-card radio'+(v===o?' selected':'')+'" data-action="select-single" data-field="'+f.id+'" data-value="'+esc(o)+'"><span class="chk"></span><span>'+esc(o)+'</span></button>').join('');
+  if(f.other) cards += '<button type="button" class="opt-card radio'+(v==='Other'?' selected':'')+'" data-action="select-single" data-field="'+f.id+'" data-value="Other"><span class="chk"></span><span>Other</span></button>';
+  let inner = '<div class="opt-grid">'+cards+'</div>';
+  if(f.other && v==='Other') inner += '<div class="other-text"><input type="text" placeholder="Please specify" value="'+esc(ov)+'" data-bind="'+f.id+'_other"></div>';
+  return fieldWrap(f, inner);
+}
+function renderSelectMulti(f){
+  const v=State.answers[f.id]||[], ov=State.answers[f.id+'_other']||'';
+  let cards = f.options.map(o=>'<button type="button" class="opt-card'+(v.includes(o)?' selected':'')+'" data-action="select-multi" data-field="'+f.id+'" data-value="'+esc(o)+'"><span class="chk"></span><span>'+esc(o)+'</span></button>').join('');
+  if(f.other) cards += '<button type="button" class="opt-card'+(v.includes('Other')?' selected':'')+'" data-action="select-multi" data-field="'+f.id+'" data-value="Other"><span class="chk"></span><span>Other</span></button>';
+  let inner = '<div class="opt-grid">'+cards+'</div>';
+  if(f.other && v.includes('Other')) inner += '<div class="other-text"><input type="text" placeholder="Please specify" value="'+esc(ov)+'" data-bind="'+f.id+'_other"></div>';
+  return fieldWrap(f, inner);
+}
+function renderScale(f){
+  const v = State.answers[f.id] || Math.ceil((f.min+f.max)/2);
+  return fieldWrap(f,'<div class="scale-wrap"><input type="range" min="'+f.min+'" max="'+f.max+'" value="'+v+'" data-bind-range="'+f.id+'">'
+    +'<div class="scale-labels"><span>'+esc(f.lowLabel)+'</span><span>'+esc(f.highLabel)+'</span></div></div>');
+}
+function renderAdjectives(f){
+  const v=State.answers[f.id]||[], ov=State.answers[f.id+'_other']||'', atMax=v.length>=f.max;
+  let chips = f.options.map(o=>{
+    const sel=v.includes(o), dis=(!sel&&atMax)?'disabled':'';
+    return '<button type="button" class="chip'+(sel?' selected':'')+'" '+dis+' data-action="chip-toggle" data-field="'+f.id+'" data-max="'+f.max+'" data-value="'+esc(o)+'">'+esc(o)+'</button>';
+  }).join('');
+  if(f.other){ const sel=v.includes('Other'), dis=(!sel&&atMax)?'disabled':''; chips += '<button type="button" class="chip'+(sel?' selected':'')+'" '+dis+' data-action="chip-toggle" data-field="'+f.id+'" data-max="'+f.max+'" data-value="Other">Other</button>'; }
+  let inner = '<div class="chip-cloud">'+chips+'</div><p class="chip-count">'+v.length+' of '+f.max+' selected</p>';
+  if(f.other && v.includes('Other')) inner += '<div class="other-text"><input type="text" placeholder="Please specify" value="'+esc(ov)+'" data-bind="'+f.id+'_other"></div>';
+  return fieldWrap(f, inner);
+}
+function renderLocationScope(f){
+  const v=State.answers[f.id]||'', t=State.answers[f.id+'_text']||'';
+  const cards = f.options.map(o=>'<button type="button" class="opt-card radio'+(v===o?' selected':'')+'" data-action="select-single" data-field="'+f.id+'" data-value="'+esc(o)+'"><span class="chk"></span><span>'+esc(o)+'</span></button>').join('');
+  return fieldWrap(f,'<div class="opt-grid">'+cards+'</div><div class="other-text"><input type="text" placeholder="Name the location(s), e.g. Austin, TX" value="'+esc(t)+'" data-bind="'+f.id+'_text"></div>');
+}
+function renderColorGroup(f){
+  const list = State.answers[f.id]||[];
+  const rows = list.map((c,i)=>'<div class="color-row">'
+    +'<input type="color" value="'+esc(c.hex||'#A9782F')+'" data-cg-hex="'+f.id+'" data-idx="'+i+'">'
+    +'<input type="text" class="hextext" value="'+esc(c.hex||'#A9782F')+'" data-cg-hextext="'+f.id+'" data-idx="'+i+'" maxlength="7">'
+    +'<input type="text" class="color-label" placeholder="Label, e.g. Primary" value="'+esc(c.label||'')+'" data-cg-label="'+f.id+'" data-idx="'+i+'">'
+    +'<button type="button" class="rep-remove" style="position:static;" data-action="cg-remove" data-field="'+f.id+'" data-idx="'+i+'">Remove</button></div>').join('');
+  return fieldWrap(f, rows+'<button type="button" class="add-btn" data-action="cg-add" data-field="'+f.id+'">+ Add a color</button>');
+}
+function renderFontList(f){
+  const list = State.answers[f.id]||[];
+  const chips = list.map((n,i)=>'<span class="swatch-pill"><span>'+esc(n)+'</span><button type="button" data-action="tag-remove" data-field="'+f.id+'" data-idx="'+i+'" style="border:none;background:none;color:var(--muted);">✕</button></span>').join('');
+  return fieldWrap(f, '<div class="pill-row">'+chips+'</div><input type="text" placeholder="Type a font name and press Enter" data-tag-input="'+f.id+'">');
+}
+function renderFile(f){
+  const files = State.files[f.id]||[];
+  const rows = files.map((file,i)=>{
+    const thumb = file.dataUrl && file.dataUrl.startsWith('data:image') ? '<img class="thumb" src="'+file.dataUrl+'">' : '<span class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted);">FILE</span>';
+    return '<div class="file-row">'+thumb+'<span class="fname">'+esc(file.name)+'</span><span style="color:var(--muted);flex:none;">'+fmtSize(file.size)+'</span><button type="button" data-action="file-remove" data-field="'+f.id+'" data-idx="'+i+'">Remove</button></div>';
+  }).join('');
+  return fieldWrap(f,'<div class="dropzone" data-dropzone="'+f.id+'" data-multiple="'+(f.multiple?'1':'0')+'">'
+    +'<div class="dz-title">Drop files here, or click to browse</div><div class="dz-sub">Files stay attached for this session</div>'
+    +'<input type="file" style="display:none;" data-file-input="'+f.id+'" accept="'+esc(f.accept||'')+'" '+(f.multiple?'multiple':'')+'></div>'
+    +'<div class="file-list">'+rows+'</div>');
+}
+function renderUrlList(f){
+  const list = State.answers[f.id]||[];
+  const rows = list.map((item,i)=>{
+    const reasons = item.reasons||[];
+    const chips = O.inspireReasons.map(r=>'<button type="button" class="chip'+(reasons.includes(r)?' selected':'')+'" data-action="urllist-reason" data-field="'+f.id+'" data-idx="'+i+'" data-value="'+esc(r)+'">'+esc(r)+'</button>').join('');
+    return '<div class="rep-item"><button type="button" class="rep-remove" data-action="urllist-remove" data-field="'+f.id+'" data-idx="'+i+'">Remove</button>'
+      +'<p class="rep-mini-label">Website URL</p><input type="url" placeholder="https://" value="'+esc(item.url||'')+'" data-urllist-url="'+f.id+'" data-idx="'+i+'" style="margin-bottom:12px;">'
+      +'<p class="rep-mini-label">What do you like about it?</p><div class="chip-cloud">'+chips+'</div></div>';
+  }).join('');
+  const disabled = list.length>=f.max?'disabled':'';
+  return fieldWrap(f, rows+'<button type="button" class="add-btn" '+disabled+' data-action="urllist-add" data-field="'+f.id+'">+ Add a website ('+list.length+'/'+f.max+')</button>');
+}
+function renderPageList(f){
+  const selected = State.answers[f.id]||[];
+  const custom = State.answers[f.id+'_custom']||[];
+  const cards = f.options.map(o=>'<button type="button" class="opt-card'+(selected.includes(o)?' selected':'')+'" data-action="select-multi" data-field="'+f.id+'" data-value="'+esc(o)+'"><span class="chk"></span><span>'+esc(o)+'</span></button>').join('');
+  const customChips = custom.map((p,i)=>'<span class="swatch-pill"><span>'+esc(p)+'</span><button type="button" data-action="page-custom-remove" data-field="'+f.id+'" data-idx="'+i+'" style="border:none;background:none;color:var(--muted);">✕</button></span>').join('');
+  return fieldWrap(f,'<div class="opt-grid">'+cards+'</div><div class="pill-row" style="margin-top:10px;">'+customChips+'</div>'
+    +'<div class="other-text" style="display:flex;gap:8px;"><input type="text" placeholder="Add a custom page" data-custom-page-input="'+f.id+'" style="flex:1;">'
+    +'<button type="button" class="btn btn-ghost" data-action="page-custom-add" data-field="'+f.id+'">Add</button></div>');
+}
+function renderCompetitorList(f){
+  const list = State.answers[f.id]||[];
+  const rows = list.map((c,i)=>'<div class="rep-item"><button type="button" class="rep-remove" data-action="comp-remove" data-field="'+f.id+'" data-idx="'+i+'">Remove</button>'
+    +'<div class="rep-grid two"><div><p class="rep-mini-label">Name</p><input type="text" value="'+esc(c.name||'')+'" data-comp="name" data-field="'+f.id+'" data-idx="'+i+'"></div>'
+    +'<div><p class="rep-mini-label">Website URL</p><input type="url" placeholder="https://" value="'+esc(c.website||'')+'" data-comp="website" data-field="'+f.id+'" data-idx="'+i+'"></div></div></div>').join('');
+  const disabled = list.length>=f.max?'disabled':'';
+  return fieldWrap(f, rows+'<button type="button" class="add-btn" '+disabled+' data-action="comp-add" data-field="'+f.id+'">+ Add a competitor ('+list.length+'/'+f.max+')</button>');
+}
+
+const RENDERERS = {
+  'text':renderText,'textarea':renderTextarea,'date':renderDate,'select-single':renderSelectSingle,
+  'select-multi':renderSelectMulti,'scale':renderScale,'adjectives':renderAdjectives,'locationscope':renderLocationScope,
+  'colorgroup':renderColorGroup,'fontlist':renderFontList,'file':renderFile,'urllist':renderUrlList,
+  'pagelist':renderPageList,'competitorlist':renderCompetitorList
+};
+
+/* ============ MAIN RENDER ============ */
+function renderApp(){
+  const app = document.getElementById('app');
+  if(State.current === -1){ app.innerHTML = renderWelcome(); bindWelcome(); return; }
+  app.innerHTML = renderShell();
+  bindGlobal();
+  if(State.current === REVIEW_INDEX){ document.getElementById('main-wrap').innerHTML = renderReview(); bindReview(); }
+  else { document.getElementById('main-wrap').innerHTML = renderStep(STEPS[State.current]); bindStepInputs(); }
+  updateFooter();
+}
+function renderWelcome(){
+  return '<div class="welcome"><div class="mark">S</div><h1 class="serif">Website Discovery Brief</h1>'
+    +'<p>A short, focused set of questions so we can design and build a website that actually fits your business. About 20 questions, roughly 8 minutes.</p>'
+    +'<button class="btn btn-primary" id="start-btn">Begin the questionnaire</button>'
+    +'<div class="meta"><div><b>8</b>sections</div><div><b>~8</b>minutes</div><div><b>1</b>PDF brief</div></div></div>';
+}
+function bindWelcome(){ document.getElementById('start-btn').addEventListener('click', ()=>{ State.current=0; State.save(); renderApp(); }); }
+
+function renderShell(){
+  const pct = Math.round((State.current/(TOTAL-1))*100);
+  const sidebarSteps = STEPS.map((s,i)=>{
+    const cls = i===State.current?'active':(i<State.current?'done':'');
+    return '<li class="'+cls+'"><button type="button" data-goto="'+i+'"><span class="num"><span>'+(i+1)+'</span></span><span>'+esc(s.title)+'</span></button></li>';
+  }).join('') + '<li class="'+(State.current===REVIEW_INDEX?'active':(State.current>REVIEW_INDEX?'done':''))+'"><button type="button" data-goto="'+REVIEW_INDEX+'"><span class="num"><span>✓</span></span><span>Review & submit</span></button></li>';
+  const mobileTitle = State.current===REVIEW_INDEX ? 'Review & submit' : STEPS[State.current].title;
+  return '<div class="rail"><div class="rail-brand"><span class="mark">S</span><span class="name">Studio Intake</span></div>'
+    +'<p class="rail-tag">Website Discovery Brief</p>'
+    +'<div class="rail-progress"><div class="bar"><i style="width:'+pct+'%"></i></div><p class="pct">'+pct+'% complete</p></div>'
+    +'<ul class="steplist">'+sidebarSteps+'</ul>'
+    +'<div class="rail-footer"><button type="button" id="save-later-btn">Save & continue later</button></div></div>'
+    +'<main><div class="topbar"><div class="row"><div><div class="label">Step '+(Math.min(State.current+1,TOTAL))+' of '+TOTAL+'</div><div class="title serif">'+esc(mobileTitle)+'</div></div>'
+    +'<button type="button" class="menu" id="mobile-menu-btn">Sections</button></div><div class="bar"><i style="width:'+pct+'%"></i></div></div>'
+    +'<div class="mobile-steps" id="mobile-steps"><ul>'+sidebarSteps+'</ul></div>'
+    +'<div class="wrap" id="main-wrap"></div>'
+    +'<div class="footer-nav"><div class="left"><button type="button" class="btn btn-ghost" id="prev-btn">Back</button></div>'
+    +'<div class="step-count" id="step-count"></div><div class="right"><button type="button" class="btn btn-primary" id="next-btn">Continue</button></div></div></main>';
+}
+function renderStep(step){
+  const fields = visibleFields(step).map(f=>{ const r=RENDERERS[f.type]; return r?r(f):''; }).join('');
+  return '<p class="step-eyebrow">'+esc(step.eyebrow)+'</p><h2 class="step-title serif">'+esc(step.title)+'</h2><p class="step-desc">'+esc(step.desc)+'</p>'+fields;
+}
+function updateFooter(){
+  const prevBtn=document.getElementById('prev-btn'), nextBtn=document.getElementById('next-btn'), count=document.getElementById('step-count');
+  if(!prevBtn) return;
+  prevBtn.style.visibility = State.current<=0 ? 'hidden':'visible';
+  if(State.current===REVIEW_INDEX){ nextBtn.textContent='Submit project brief →'; count.textContent='Final step'; }
+  else if(State.current===TOTAL-2){ nextBtn.textContent='Review answers'; count.textContent='Step '+(State.current+1)+' of '+TOTAL; }
+  else { nextBtn.textContent='Continue'; count.textContent='Step '+(State.current+1)+' of '+TOTAL; }
+}
+
+/* ============ GLOBAL BINDINGS ============ */
+function bindGlobal(){
+  document.getElementById('prev-btn').addEventListener('click', ()=>{ if(State.current>0){ State.current--; State.save(); renderApp(); window.scrollTo(0,0); } });
+  document.getElementById('next-btn').addEventListener('click', ()=>{
+    if(State.current===REVIEW_INDEX){ submitBrief(); return; }
+    if(!validateStep(State.current)){ showToast('Please complete the required fields.'); return; }
+    State.current++; State.save(); renderApp(); window.scrollTo(0,0);
+  });
+  document.getElementById('save-later-btn').addEventListener('click', ()=>{ State.save(); showToast('Progress saved on this device. Come back any time.'); });
+  const menuBtn = document.getElementById('mobile-menu-btn');
+  if(menuBtn) menuBtn.addEventListener('click', ()=>document.getElementById('mobile-steps').classList.toggle('open'));
+  document.querySelectorAll('[data-goto]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const target = parseInt(btn.getAttribute('data-goto'),10);
+      if(target>State.current && target<REVIEW_INDEX && !validateStep(State.current)){ showToast('Please complete the required fields first.'); return; }
+      State.current=target; State.save(); renderApp(); window.scrollTo(0,0);
+    });
+  });
+}
+
+/* ============ STEP INPUT BINDINGS ============ */
+function bindStepInputs(){
+  const wrap = document.getElementById('main-wrap');
+  wrap.querySelectorAll('[data-bind]').forEach(el=>el.addEventListener('input', ()=>{ State.answers[el.getAttribute('data-bind')]=el.value; State.save(); }));
+  wrap.querySelectorAll('[data-bind-range]').forEach(el=>el.addEventListener('input', ()=>{ State.answers[el.getAttribute('data-bind-range')]=parseInt(el.value,10); State.save(); }));
+  wrap.addEventListener('click', onStepClick);
+  wrap.addEventListener('input', onStepDelegatedInput);
+  wrap.querySelectorAll('[data-dropzone]').forEach(dz=>{
+    const id=dz.getAttribute('data-dropzone'), multiple=dz.getAttribute('data-multiple')==='1', input=dz.querySelector('[data-file-input]');
+    dz.addEventListener('click', ()=>input.click());
+    input.addEventListener('change', e=>handleFiles(id, e.target.files, multiple));
+    ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.add('drag'); }));
+    ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('drag'); }));
+    dz.addEventListener('drop', e=>handleFiles(id, e.dataTransfer.files, multiple));
+  });
+  wrap.querySelectorAll('[data-tag-input]').forEach(inp=>{
+    inp.addEventListener('keydown', e=>{
+      if(e.key==='Enter'||e.key===','){ e.preventDefault(); const id=inp.getAttribute('data-tag-input'); const val=inp.value.trim();
+        if(val){ State.answers[id]=State.answers[id]||[]; State.answers[id].push(val); inp.value=''; State.save(); renderApp(); } }
+    });
+  });
+}
+function handleFiles(fieldId, fileListRaw, multiple){
+  const files = Array.from(fileListRaw); if(!files.length) return;
+  const existing = State.files[fieldId]||[];
+  const toAdd = multiple ? files : files.slice(0,1);
+  Promise.all(toAdd.map(file=>{
+    const isImg = file.type.startsWith('image/');
+    const rec = {name:file.name,size:file.size,type:file.type,dataUrl:null};
+    if(isImg && file.size<6*1024*1024) return fileToDataUrl(file).then(url=>{ rec.dataUrl=url; return rec; }).catch(()=>rec);
+    return Promise.resolve(rec);
+  })).then(recs=>{
+    State.files[fieldId] = multiple ? existing.concat(recs) : recs;
+    State.save(); renderApp();
+  });
+}
+function onStepClick(e){
+  const btn = e.target.closest('[data-action]'); if(!btn) return;
+  const action = btn.getAttribute('data-action'), fieldId = btn.getAttribute('data-field');
+  const idx = btn.hasAttribute('data-idx') ? parseInt(btn.getAttribute('data-idx'),10) : null;
+  const value = btn.getAttribute('data-value');
+  switch(action){
+    case 'select-single': State.answers[fieldId]=value; break;
+    case 'select-multi': { const arr=State.answers[fieldId]=State.answers[fieldId]||[]; const i=arr.indexOf(value); if(i>-1) arr.splice(i,1); else arr.push(value); break; }
+    case 'chip-toggle': { const max=parseInt(btn.getAttribute('data-max'),10); const arr=State.answers[fieldId]=State.answers[fieldId]||[]; const i=arr.indexOf(value); if(i>-1) arr.splice(i,1); else if(arr.length<max) arr.push(value); break; }
+    case 'cg-add': { const arr=State.answers[fieldId]=State.answers[fieldId]||[]; arr.push({hex:'#A9782F',label:''}); break; }
+    case 'cg-remove': State.answers[fieldId].splice(idx,1); break;
+    case 'tag-remove': State.answers[fieldId].splice(idx,1); break;
+    case 'file-remove': State.files[fieldId].splice(idx,1); break;
+    case 'urllist-add': { const arr=State.answers[fieldId]=State.answers[fieldId]||[]; arr.push({url:'',reasons:[]}); break; }
+    case 'urllist-remove': State.answers[fieldId].splice(idx,1); break;
+    case 'urllist-reason': { const item=State.answers[fieldId][idx]; item.reasons=item.reasons||[]; const i=item.reasons.indexOf(value); if(i>-1) item.reasons.splice(i,1); else item.reasons.push(value); break; }
+    case 'page-custom-add': { const input=document.querySelector('[data-custom-page-input="'+fieldId+'"]'); const val=input.value.trim();
+      if(val){ const arr=State.answers[fieldId+'_custom']=State.answers[fieldId+'_custom']||[]; arr.push(val); input.value=''; } break; }
+    case 'page-custom-remove': State.answers[fieldId+'_custom'].splice(idx,1); break;
+    case 'comp-add': { const arr=State.answers[fieldId]=State.answers[fieldId]||[]; arr.push({name:'',website:''}); break; }
+    case 'comp-remove': State.answers[fieldId].splice(idx,1); break;
+    default: return;
+  }
+  State.save(); renderApp();
+}
+function onStepDelegatedInput(e){
+  const el = e.target;
+  if(el.hasAttribute('data-cg-hex')){ const f=el.getAttribute('data-cg-hex'), i=parseInt(el.getAttribute('data-idx'),10); State.answers[f][i].hex=el.value; const sib=el.parentElement.querySelector('[data-cg-hextext]'); if(sib) sib.value=el.value; State.save(); return; }
+  if(el.hasAttribute('data-cg-hextext')){ const f=el.getAttribute('data-cg-hextext'), i=parseInt(el.getAttribute('data-idx'),10); State.answers[f][i].hex=el.value; State.save(); return; }
+  if(el.hasAttribute('data-cg-label')){ const f=el.getAttribute('data-cg-label'), i=parseInt(el.getAttribute('data-idx'),10); State.answers[f][i].label=el.value; State.save(); return; }
+  if(el.hasAttribute('data-urllist-url')){ const f=el.getAttribute('data-urllist-url'), i=parseInt(el.getAttribute('data-idx'),10); State.answers[f][i].url=el.value; State.save(); return; }
+  if(el.hasAttribute('data-comp')){ const key=el.getAttribute('data-comp'), f=el.getAttribute('data-field'), i=parseInt(el.getAttribute('data-idx'),10); State.answers[f][i][key]=el.value; State.save(); return; }
+}
+
+/* ============ REVIEW ============ */
+function rv(val){ if(isEmpty(val)) return '<span class="empty">Not provided</span>'; if(Array.isArray(val)) return esc(val.join(', ')); return esc(val); }
+function reviewRow(label, value){ return '<div class="review-row"><div class="rk">'+esc(label)+'</div><div class="rv">'+value+'</div></div>'; }
+function withOther(id){
+  const v=State.answers[id], other=State.answers[id+'_other'];
+  if(isEmpty(v)) return rv(v);
+  if(Array.isArray(v)) return esc(v.map(x=>x==='Other'&&other?'Other ('+other+')':x).join(', '));
+  return esc(v==='Other'&&other?'Other ('+other+')':v);
+}
+function renderReview(){
+  const a = State.answers;
+  const sections = [
+    {title:'Business', step:0, rows:[['Business name',rv(a.businessName)],['What they do',rv(a.businessDescription)],['Products / services',rv(a.productsServices)]]},
+    {title:'Goals', step:1, rows:[['Main goal',withOther('mainGoal')],['Primary action',withOther('primaryAction')],['Success definition',rv(a.successDefinition)]]},
+    {title:'Audience', step:2, rows:[['Ideal customer',rv(a.idealCustomer)],['Location',rv([a.audienceLocation,a.audienceLocation_text].filter(Boolean).join(' — '))],['Customer problem',rv(a.customerProblem)]]},
+    {title:'Brand', step:3, rows:[['Logo',rv(a.hasLogo)],['Colors',rv(a.hasColors)],
+      ['Color palette', (a.colors&&a.colors.length) ? '<div class="review-swatches">'+a.colors.map(c=>'<span class="swatch-pill"><span class="dot" style="background:'+esc(c.hex)+'"></span>'+esc(c.label||c.hex)+'</span>').join('')+'</div>' : rv(null)],
+      ['Fonts / guidelines',rv(a.hasBrandKit)+(a.fonts&&a.fonts.length?': '+esc(a.fonts.join(', ')):'')],
+      ['Brand personality',withOther('brandAdjectives')]]},
+    {title:'Visual direction', step:4, rows:[['Visual style',withOther('visualStyle')],['Boldness',a.boldness?a.boldness+' of 5':rv(null)],['Animation level',rv(a.animationLevel)],
+      ['Inspiration sites',(a.likedSites&&a.likedSites.length)?esc(a.likedSites.map(s=>s.url).filter(Boolean).join(', ')):rv(null)],['Things to avoid',rv(a.avoidStyles)]]},
+    {title:'Website & UX', step:5, rows:[['Pages',rv([...(a.pages||[]),...(a.pages_custom||[])])],['Functionality',withOther('functionality')],['Existing website',rv(a.hasExistingWebsite)+(a.existingUrl?': '+esc(a.existingUrl):'')],['Improvements wanted',withOther('improvements')]]},
+    {title:'Content & competition', step:6, rows:[['Assets ready',rv(a.assetsReady)],['Content provider',rv(a.contentProvider)],
+      ['Competitors',(a.competitors&&a.competitors.length)?esc(a.competitors.map(c=>c.name).filter(Boolean).join(', ')):rv(null)],['Competitive edge',rv(a.competitiveEdge)]]},
+    {title:'Final notes', step:7, rows:[['Additional notes',rv(a.additionalNotes)],['Launch date',rv(a.launchDate)],['Domain / hosting',rv(a.domainHosting)],['Integrations',rv(a.integrations)]]}
+  ];
+  const html = sections.map(s=>{
+    const rows = s.rows.map(r=>reviewRow(r[0],r[1])).join('');
+    return '<div class="review-section"><div class="rs-head"><h3 class="serif">'+esc(s.title)+'</h3><button type="button" class="edit-btn" data-editstep="'+s.step+'">Edit</button></div>'+rows+'</div>';
+  }).join('');
+  return '<p class="step-eyebrow">Final review</p><h2 class="step-title serif">Your Website Brief</h2>'
+    +'<p class="step-desc">Review everything below before submitting. You can edit any section — nothing is final until you submit.</p>'+html
+    +'<div class="consent-box"><input type="checkbox" id="consent-check" '+(State.consent?'checked':'')+'>'
+    +'<label for="consent-check">I confirm that the information I\'ve provided is accurate and represents my current website requirements.</label></div>';
+}
+function bindReview(){
+  document.querySelectorAll('[data-editstep]').forEach(btn=>btn.addEventListener('click', ()=>{ State.current=parseInt(btn.getAttribute('data-editstep'),10); State.save(); renderApp(); window.scrollTo(0,0); }));
+  document.getElementById('consent-check').addEventListener('change', e=>{ State.consent=e.target.checked; State.save(); });
+}
+
+/* ============ SUBMIT + PDF ============ */
+function submitBrief(){
+  if(!State.consent){ showToast('Please confirm the accuracy checkbox before submitting.'); return; }
+  showToast('Generating your PDF brief…');
+  setTimeout(()=>{ try{ generatePdf(); showToast('Brief generated. Your download has started.'); }catch(err){ console.error(err); showToast('Something went wrong generating the PDF. Please try again.'); } }, 50);
+}
+function generatePdf(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'a4'});
+  const PAGE_W = doc.internal.pageSize.getWidth(), PAGE_H = doc.internal.pageSize.getHeight();
+  const MARGIN = 56, CONTENT_W = PAGE_W - MARGIN*2;
+  const INK=[20,22,31], BRASS=[169,120,47], MUTED=[110,109,116], LINE=[223,216,200];
+  let y = MARGIN, pageNum = 1;
+  const a = State.answers;
+
+  function footer(){
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...MUTED);
+    doc.text('Website Discovery Brief', MARGIN, PAGE_H-30);
+    doc.text(String(pageNum), PAGE_W-MARGIN, PAGE_H-30, {align:'right'});
+    doc.setDrawColor(...LINE); doc.setLineWidth(0.5); doc.line(MARGIN, PAGE_H-40, PAGE_W-MARGIN, PAGE_H-40);
+  }
+  function newPage(){ footer(); doc.addPage(); pageNum++; y = MARGIN; }
+  function ensure(space){ if(y+space > PAGE_H-60) newPage(); }
+  function heading(num, title){
+    ensure(50);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...BRASS); doc.text(num, MARGIN, y); y+=16;
+    doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(...INK); doc.text(title, MARGIN, y); y+=8;
+    doc.setDrawColor(...BRASS); doc.setLineWidth(1.4); doc.line(MARGIN, y+6, MARGIN+34, y+6); y+=26;
+  }
+  function label(text){ ensure(20); doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...INK); doc.text(text, MARGIN, y); y+=14; }
+  function body(text, opts){
+    opts = opts||{};
+    const str = (text===undefined||text===null||text===''||(Array.isArray(text)&&!text.length)) ? 'Not provided' : (Array.isArray(text)?text.join(', '):String(text));
+    doc.setFont('helvetica', str==='Not provided'?'italic':'normal'); doc.setFontSize(10.5);
+    doc.setTextColor(str==='Not provided'?MUTED[0]:INK[0], str==='Not provided'?MUTED[1]:INK[1], str==='Not provided'?MUTED[2]:INK[2]);
+    const lines = doc.splitTextToSize(str, CONTENT_W);
+    lines.forEach(line=>{ ensure(16); doc.text(line, MARGIN, y); y+=15; });
+    y += (opts.gap===undefined?12:opts.gap);
+  }
+  function qa(q,v){ label(q); body(v); }
+  function divider(){ ensure(14); doc.setDrawColor(...LINE); doc.setLineWidth(0.5); doc.line(MARGIN,y,PAGE_W-MARGIN,y); y+=18; }
+
+  /* Cover */
+  doc.setFillColor(...INK); doc.rect(0,0,PAGE_W,PAGE_H,'F');
+  doc.setDrawColor(...BRASS); doc.setLineWidth(1.6); doc.line(MARGIN,150,MARGIN+60,150);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(217,174,104);
+  doc.text('WEBSITE DISCOVERY BRIEF', MARGIN, 130);
+  doc.setFont('helvetica','bold'); doc.setFontSize(34); doc.setTextColor(255,255,255);
+  const nameLines = doc.splitTextToSize(a.businessName || 'Untitled Project', CONTENT_W);
+  let coverY = 200; nameLines.forEach(l=>{ doc.text(l, MARGIN, coverY); coverY += 40; });
+  doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor(200,198,210);
+  doc.text('A creative and technical foundation for the website project.', MARGIN, coverY+10);
+  const dateStr = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  let metaY = PAGE_H-170;
+  doc.setDrawColor(80,82,96); doc.setLineWidth(0.6); doc.line(MARGIN,metaY,PAGE_W-MARGIN,metaY); metaY+=26;
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(150,148,162);
+  doc.text('PREPARED FOR', MARGIN, metaY); doc.text('DATE', MARGIN+220, metaY); doc.text('PREPARED BY', MARGIN+380, metaY);
+  metaY += 16;
+  doc.setFont('helvetica','normal'); doc.setFontSize(11.5); doc.setTextColor(255,255,255);
+  doc.text(a.businessName||'Client', MARGIN, metaY); doc.text(dateStr, MARGIN+220, metaY); doc.text('Studio Intake', MARGIN+380, metaY);
+  newPage();
+
+  /* 01 Business Overview */
+  heading('01','Business Overview');
+  qa('Business name', a.businessName);
+  qa('What the business does', a.businessDescription);
+  qa('Products or services offered', a.productsServices);
+
+  /* 02 Goals */
+  heading('02','Goals');
+  qa('Website goal', a.mainGoal===('Other')&&a.mainGoal_other ? 'Other — '+a.mainGoal_other : a.mainGoal);
+  qa('Primary call to action', a.primaryAction===('Other')&&a.primaryAction_other ? 'Other — '+a.primaryAction_other : a.primaryAction);
+  qa('What success looks like', a.successDefinition);
+
+  /* 03 Target Audience */
+  heading('03','Target Audience');
+  qa('Ideal customer', a.idealCustomer);
+  qa('Location', [a.audienceLocation, a.audienceLocation_text].filter(Boolean).join(' — '));
+  qa('Customer problem solved', a.customerProblem);
+
+  /* 04 Brand Identity */
+  heading('04','Brand Identity');
+  qa('Existing logo', a.hasLogo);
+  qa('Fonts / brand guidelines on file', a.hasBrandKit + (a.fonts&&a.fonts.length ? ' — '+a.fonts.join(', ') : ''));
+  qa('Brand personality', a.brandAdjectives);
+  if(a.colors && a.colors.length){
+    label('Brand color palette'); let sx = MARGIN; ensure(50);
+    a.colors.forEach(c=>{
+      const hex=(c.hex||'#A9782F').replace('#','');
+      const r=parseInt(hex.substring(0,2),16)||0,g=parseInt(hex.substring(2,4),16)||0,b=parseInt(hex.substring(4,6),16)||0;
+      doc.setFillColor(r,g,b); doc.roundedRect(sx,y,60,34,3,3,'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...MUTED);
+      doc.text((c.label||'Color'), sx, y+46); doc.text((c.hex||'').toUpperCase(), sx, y+56);
+      sx += 78; if(sx > PAGE_W-MARGIN-60){ sx=MARGIN; y+=70; ensure(70); }
+    });
+    y += 70;
+  }
+  if(State.files.logoFile && State.files.logoFile[0] && State.files.logoFile[0].dataUrl){
+    try{ label('Uploaded logo'); ensure(90); doc.addImage(State.files.logoFile[0].dataUrl, undefined, MARGIN, y, 80, 80, undefined, 'FAST'); y+=96; }catch(e){}
+  }
+
+  /* 05 Visual Direction */
+  heading('05','Visual Direction');
+  qa('Visual style', a.visualStyle);
+  qa('Boldness level', a.boldness ? a.boldness+' of 5' : null);
+  qa('Animation preference', a.animationLevel);
+  if(a.likedSites && a.likedSites.length){
+    label('Websites they like');
+    a.likedSites.filter(s=>s.url).forEach(s=>body('• '+s.url+(s.reasons&&s.reasons.length?'  ('+s.reasons.join(', ')+')':''), {gap:4}));
+    y += 8;
+  }
+  qa('Things to avoid', a.avoidStyles);
+
+  /* 06 Website & UX */
+  heading('06','Website & UX');
+  qa('Required pages', [...(a.pages||[]),...(a.pages_custom||[])]);
+  qa('Functionality', a.functionality);
+  if(a.sellWhat) qa('What they sell', a.sellWhat);
+  if(a.productCount) qa('Approx. product count', a.productCount);
+  if(a.ecommercePlatform) qa('E-commerce platform', a.ecommercePlatform);
+  if(a.bookingType) qa('Booking type', a.bookingType);
+  if(a.bookingPlatform) qa('Booking platform', a.bookingPlatform);
+  qa('Existing website', a.hasExistingWebsite==='Yes' ? a.existingUrl : a.hasExistingWebsite);
+  if(a.improvements) qa('Improvements wanted', a.improvements);
+
+  /* 07 Content & Competition */
+  heading('07','Content & Competition');
+  qa('Assets ready', a.assetsReady);
+  const fileNames = (State.files.assetFiles||[]).map(f=>f.name);
+  if(fileNames.length) qa('Uploaded assets', fileNames);
+  qa('Content responsibility', a.contentProvider);
+  if(a.competitors && a.competitors.length){
+    a.competitors.forEach(c=>{ if(!c.name && !c.website) return; label(c.name||'Competitor'); body(c.website||null, {gap:14}); });
+  } else { label('Competitors'); body(null); }
+  qa('Competitive edge to aim for', a.competitiveEdge);
+
+  /* 08 Final Notes */
+  heading('08','Final Notes');
+  qa('Additional notes', a.additionalNotes);
+  if(a.launchDate) qa('Preferred launch date', a.launchDate);
+  if(a.domainHosting) qa('Domain / hosting', a.domainHosting);
+  if(a.integrations) qa('Required integrations', a.integrations);
+
+  footer();
+  const safeName = (a.businessName||'client').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+  doc.save('website-discovery-brief-'+(safeName||'client')+'.pdf');
+}
+
+/* ============ INIT ============ */
+function init(){ const restored = State.load(); if(!restored) State.current = -1; renderApp(); }
+init();
+
+})();
+</script>
+</body>
+</html>
